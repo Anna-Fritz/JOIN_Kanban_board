@@ -27,23 +27,28 @@ function fillKeyMetrics(tasks) {
   document.getElementById("render-to-do-count").innerHTML = `${toDoCount}`;
   let doneCount = tasks.filter((t) => t["status"] == "done").length;
   document.getElementById("render-done-count").innerHTML = `${doneCount}`;
-
-  for (let i = 0; i < tasks.length; i++) {
-    const task = tasks[i];
-    if (task["prio"][0] == "urgent") {
-      let urgentCount = tasks.filter((t) => t["prio"][0] == "urgent").length;
-      document.getElementById(
-        "render-urgent-count"
-      ).innerHTML = `${urgentCount}`;
-      getNextUrgentDate();
-    } else {
-      document.getElementById("render-urgent-count").innerHTML = `0`;
-      document.getElementById(
-        "upcoming-deadline"
-      ).innerHTML = `No Urgent Deadlines`;
-    }
-  }
+  checkUrgentTasks(tasks);
   fillKeyMetricsAmounts(tasks);
+}
+
+/**
+ * Checks for urgent tasks in the provided task list, updates the count in the UI, and displays the next urgent deadline if any exist.
+ * 
+ * @param {Array} tasks - The list of tasks to be checked for urgency.
+ */
+function checkUrgentTasks(tasks) {
+  let urgentCount = tasks.filter((t) => t["prio"][0] == "urgent").length;
+  if (urgentCount > 0) {
+    document.getElementById(
+      "render-urgent-count"
+    ).innerHTML = `${urgentCount}`;
+    getNextUrgentDate();
+  } else {
+    document.getElementById("render-urgent-count").innerHTML = `0`;
+    document.getElementById(
+      "upcoming-deadline"
+    ).innerHTML = `No Urgent Deadlines`;
+  }
 }
 
 /**
