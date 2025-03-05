@@ -76,9 +76,18 @@ function getInitialsHeader(name) {
 /**
  * removes the username and pageLoaded items from the browser's localStorage, effectively logging the user out
  */
-function logOut() {
-  localStorage.removeItem("username");
-  localStorage.removeItem("pageLoaded");
+async function logOut() {
+  let rememberMe = localStorage.getItem("rememberMeChecked")
+  if(!rememberMe) {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("username");
+    localStorage.removeItem("pageLoaded");  
+  }
+  await fetch("http://localhost:8000/api/auth/logout/", {
+    method: "POST",
+    credentials: "include", // important for sending cookie
+  })
 }
 
 /**
@@ -124,7 +133,7 @@ function generateContactDetailsHTML(i, user, color, isMobile) {
   if (isMobile) {
     return /*html*/ `
       <div class="render-details-head-mobile">
-        <div id="initials-detail" class="profile-initials-mobile">${getInitials(
+        <div id="initials-detail" class="profile-initials-mobile" style="background-color: ${color};">${getInitials(
           user.username
         )}</div>
         <div class="profile-name-mobile">${user.username}</div>
@@ -155,9 +164,9 @@ function generateContactDetailsHTML(i, user, color, isMobile) {
                         <path d="M5 19H6.4L15.025 10.375L13.625 8.975L5 17.6V19ZM19.3 8.925L15.05 4.725L16.45 3.325C16.8333 2.94167 17.3042 2.75 17.8625 2.75C18.4208 2.75 18.8917 2.94167 19.275 3.325L20.675 4.725C21.0583 5.10833 21.2583 5.57083 21.275 6.1125C21.2917 6.65417 21.1083 7.11667 20.725 7.5L19.3 8.925ZM17.85 10.4L7.25 21H3V16.75L13.6 6.15L17.85 10.4Z" fill="#2A3647"/>
                     </g>
                 </svg>          
-                <span onclick="openEditContact(); renderEdit(${i})">Edit</span>
+                <span onclick="openEditContact(); renderEdit(${i}, ${user.id})">Edit</span>
         </div>
-        <div onclick="deleteContact(${i})" class="edit-delete-child-mobile">
+        <div onclick="deleteContact(${user.id})" class="edit-delete-child-mobile">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <mask id="mask0_207322_4146" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
                         <rect width="24" height="24" fill="#D9D9D9"/>
@@ -232,7 +241,7 @@ function generateEditContactHTML(user, index) {
       <span class="edit-contact-avatar"></span>
       <div class="edit-contact-bottom-rightmost-section">
         <div type="reset" onclick="closeEditContactPopup()" id="contactCloseButton" class="edit-contact-close"></div>
-        <form onsubmit="editValidateName(); return false" class="edit-contact-form" name="editForm">
+        <form onsubmit="editValidateName(${user.id}); return false" class="edit-contact-form" name="editForm">
           <div class="input-edit-container">
             <input onkeyup="clearEditFields()" name="editName" class="edit-imput edit-imput-name" id="editInputName" type="text" placeholder="Name" value="${user.username}"><br> 
             <span class="validSpanField" id="editValidSpanFieldName"></span>
@@ -246,7 +255,7 @@ function generateEditContactHTML(user, index) {
             <span class="validSpanField" id="editValidSpanFieldPhone"></span>
           </div>
           <div class="button-edit-container">
-            <button onclick="deleteContact(${index})" class="btn-cancel">
+            <button onclick="deleteContact(${user.id})" class="btn-cancel">
               Delete
             </button>
             <button type="submit" class="btn-create btn-create:hover ::root">Save<img src="../assets/img/check.svg"></button>
@@ -261,14 +270,14 @@ function generateToDoHTML(element, i) {
   return /*html*/ `
         <div id="task${i}" draggable="true" ondragstart="startDragging(${index_to_do[i]}, ${i})" onclick="openTaskDetails(${index_to_do[i]})" class="task">
             <div class="task-head">
-                <div class="task-category" style="background : ${element.category[1]}">${element.category[0]}</div>
+                <div class="task-category" style="background : ${element.category.color}">${element.category.name}</div>
                 <img onclick="toggleKebabDropdown(${index_to_do[i]}), stop(event)" src="../assets/img/kebab.svg" alt="more options">
                 <div id="kebab-dropdown${index_to_do[i]}" class="kebab-dropdown d-none">
                     <span onclick="moveToInProgress(${index_to_do[i]}, stop(event))">In progress</span>
                     <span onclick="moveToAwaitFeedback(${index_to_do[i]}, stop(event))">Await feedback</span>
                     <span onclick="moveToDone(${index_to_do[i]}, stop(event))">Done</span>
+                    <span onclick="deleteTask(${element.id}), stop(event)">Delete</span>
                 </div>
-            
             </div>
             <span id="task-title">${element.title}</span>
             <span id="task-description-to-do${i}" class="task-description"></span>
@@ -286,12 +295,13 @@ function generateInProgressHTML(element, i) {
   return /*html*/ `
           <div id="task${i}" draggable="true" ondragstart="startDragging(${index_in_progress[i]})" onclick="openTaskDetails(${index_in_progress[i]})" class="task">
               <div class="task-head">
-                  <div class="task-category" style="background : ${element.category[1]}">${element.category[0]}</div>
+                  <div class="task-category" style="background : ${element.category.color}">${element.category.name}</div>
                   <img onclick="toggleKebabDropdown(${index_in_progress[i]}, stop(event))" src="../assets/img/kebab.svg" alt="more options">
                   <div id="kebab-dropdown${index_in_progress[i]}" class="kebab-dropdown d-none">
                         <span onclick="moveToToDo(${index_in_progress[i]}), stop(event)">To do</span>
                         <span onclick="moveToAwaitFeedback(${index_in_progress[i]}), stop(event)">Await feedback</span>
                         <span onclick="moveToDone(${index_in_progress[i]}), stop(event)">Done</span>
+                        <span onclick="deleteTask(${element.id}), stop(event)">Delete</span>
                   </div>
               
               </div>
@@ -311,12 +321,13 @@ function generateAwaitFeedbackHTML(element, i) {
   return /*html*/ `
           <div id="task${i}" draggable="true" ondragstart="startDragging(${index_await_feedback[i]})" onclick="openTaskDetails(${index_await_feedback[i]})" class="task">
               <div class="task-head">
-                  <div class="task-category" style="background : ${element.category[1]}">${element.category[0]}</div>
+                  <div class="task-category" style="background : ${element.category.color}">${element.category.name}</div>
                   <img onclick="toggleKebabDropdown(${index_await_feedback[i]}, stop(event))" src="../assets/img/kebab.svg" alt="more options">
                   <div id="kebab-dropdown${index_await_feedback[i]}" class="kebab-dropdown d-none">
                         <span onclick="moveToToDo(${index_await_feedback[i]}), stop(event)">To do</span>
                         <span onclick="moveToInProgress(${index_await_feedback[i]}), stop(event)">In progress</span>
                         <span onclick="moveToDone(${index_await_feedback[i]}), stop(event)">Done</span>
+                        <span onclick="deleteTask(${element.id}), stop(event)">Delete</span>
                   </div>
               
               </div>
@@ -336,12 +347,13 @@ function generateDoneHTML(element, i) {
   return /*html*/ `
           <div id="task${i}" draggable="true" ondragstart="startDragging(${index_done[i]})" onclick="openTaskDetails(${index_done[i]})" class="task">
               <div class="task-head">
-                  <div class="task-category" style="background : ${element.category[1]}">${element.category[0]}</div>
+                  <div class="task-category" style="background : ${element.category.color}">${element.category.name}</div>
                   <img onclick="toggleKebabDropdown(${index_done[i]}, stop(event))" src="../assets/img/kebab.svg" alt="more options">
                   <div id="kebab-dropdown${index_done[i]}" class="kebab-dropdown d-none">
                         <span onclick="moveToToDo(${index_done[i]}), stop(event)">To do</span>
                         <span onclick="moveToInProgress(${index_done[i]}), stop(event)">In progress</span>
                         <span onclick="moveToAwaitFeedback(${index_done[i]}), stop(event)">Await feedback</span>
+                        <span onclick="deleteTask(${element.id}), stop(event)">Delete</span>
                   </div>
               
               </div>
@@ -363,7 +375,7 @@ function generateTaskDetailsHTML(task, i) {
       <div class="task-details">
         <div class="task-details-main-part">
           <div class="task-head">
-              <div class="task-category-detail" style="background : ${task.category[1]}">${task.category[0]}</div>
+              <div class="task-category-detail" style="background : ${task.category.color}">${task.category.name}</div>
               <img onclick="closeTaskDetails()" src="../assets/img/iconoir_cancel.svg" alt="close">
           </div>
           <span class="task-details-title">${task.title}</span>
@@ -386,7 +398,7 @@ function generateTaskDetailsHTML(task, i) {
           </div>
         </div>
         <div class="delete-edit-cont">
-          <div onclick="deleteTask(${i})" class="delete-edit-single">
+          <div onclick="deleteTask(${task.id})" class="delete-edit-single">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <mask id="mask0_207322_4146" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
                 <rect width="24" height="24" fill="#D9D9D9"/>
@@ -433,7 +445,7 @@ function generateTaskDetailsEditHTML(i) {
                   id="editTitle"
                   type="text"
                   placeholder="Enter a title"
-                  maxlength="40"
+                  maxlength="60"
                 />
               </div>
 
@@ -510,14 +522,14 @@ function generateTaskDetailsEditHTML(i) {
                 <label>Assigned to</label>
                 <input
                   class="input-addtask"
-                  onclick="showUsers()"
+                  onclick="showUsers(), stop(event)"
                   id="userNameInput"
                   type="text"
                   placeholder="Select contact to assign"
                   maxlength="40"
                 />
                 <img
-                  onclick="showUsers()"
+                  onclick="showUsers(), stop(event)"
                   id="arrowDropMenuAssigned"
                   src="../assets/img/arrow_drop_down.png"
                   alt=""
@@ -536,7 +548,7 @@ function generateTaskDetailsEditHTML(i) {
                     class="plus-minus-drop-menu"
                     type="text"
                     placeholder="Add a new subtask"
-                    maxlength="40"
+                    maxlength="100"
                     onfocus="showClearButton()"
                   />
                   <div class="input-icons">
