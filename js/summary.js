@@ -1,48 +1,56 @@
-const ADD_URL =
-  "https://.firebasedatabase.app/";
+const SUMMARY_URL =
+  "http://127.0.0.1:8000/summary/";
 
 /**
  * Getting DB data for summary
  */
 async function renderKeyMetrics() {
-  tasks = [];
-  let response = await fetch(ADD_URL + ".json");
-  const data = await response.json();
-  if (data && typeof data === "object" && data.tasks) {
-    tasksArray = data.tasks;
-    let ObjEntries = Object.entries(tasksArray);
-    for (let index = 0; index < ObjEntries.length; index++) {
-      const task = ObjEntries[index][1];
-      tasks.push(task);
-    }
+  const accessToken = localStorage.getItem("accessToken");
+
+  if (!accessToken) {
+      return;
   }
-  fillKeyMetrics(tasks);
+
+  let response = await fetch(SUMMARY_URL, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`
+    }
+  });
+  if (response.status === 401) {
+    await refreshToken();
+    return renderKeyMetrics();
+  }
+  if (response.ok) {
+    const data = await response.json();
+    fillKeyMetrics(data);  
+  }
 }
 
 /**
  * Rendering summarydata in HTML
  */
-function fillKeyMetrics(tasks) {
-  let toDoCount = tasks.filter((t) => t["status"] == "to_do").length;
+function fillKeyMetrics(summary) {
+  let toDoCount = summary.todo_count;
   document.getElementById("render-to-do-count").innerHTML = `${toDoCount}`;
-  let doneCount = tasks.filter((t) => t["status"] == "done").length;
+  let doneCount = summary.done_count;
   document.getElementById("render-done-count").innerHTML = `${doneCount}`;
-  checkUrgentTasks(tasks);
-  fillKeyMetricsAmounts(tasks);
+  checkUrgentTasks(summary);
+  fillKeyMetricsAmounts(summary);
 }
 
 /**
  * Checks for urgent tasks in the provided task list, updates the count in the UI, and displays the next urgent deadline if any exist.
  * 
- * @param {Array} tasks - The list of tasks to be checked for urgency.
+ * @param {Array} summary - The list of tasks to be checked for urgency.
  */
-function checkUrgentTasks(tasks) {
-  let urgentCount = tasks.filter((t) => t["prio"][0] == "urgent").length;
+function checkUrgentTasks(summary) {
+  let urgentCount = summary.urgent_count;
   if (urgentCount > 0) {
     document.getElementById(
       "render-urgent-count"
     ).innerHTML = `${urgentCount}`;
-    getNextUrgentDate();
+    getNextUrgentDate(summary);
   } else {
     document.getElementById("render-urgent-count").innerHTML = `0`;
     document.getElementById(
@@ -54,18 +62,14 @@ function checkUrgentTasks(tasks) {
 /**
  * Updates the key metrics on the board (total tasks, in-progress tasks, and tasks awaiting feedback) based on the provided tasks array.
  */
-function fillKeyMetricsAmounts(tasks) {
-  let allTasks = tasks.length;
+function fillKeyMetricsAmounts(summary) {
+  let allTasks = summary.total_tasks;
   document.getElementById("tasks-in-board-count").innerHTML = `${allTasks}`;
-  let inProgressCount = tasks.filter(
-    (t) => t["status"] == "in_progress"
-  ).length;
+  let inProgressCount = summary.in_progress_count;
   document.getElementById(
     "tasks-in-progress-count"
   ).innerHTML = `${inProgressCount}`;
-  let awaitFeedbackCount = tasks.filter(
-    (t) => t["status"] == "await_feedback"
-  ).length;
+  let awaitFeedbackCount = summary.awaiting_feedback_count;
   document.getElementById(
     "tasks-await-feedback-count"
   ).innerHTML = `${awaitFeedbackCount}`;
@@ -74,14 +78,8 @@ function fillKeyMetricsAmounts(tasks) {
 /**
  * Selecting next urgent date for summary and display in HTML
  */
-function getNextUrgentDate() {
-  index_urgent = [];
-  urgent_dates = [];
-  getUrgentData();
-  urgent_dates.sort(function (a, b) {
-    return new Date(a) - new Date(b);
-  });
-  let nextDate = urgent_dates[0];
+function getNextUrgentDate(summary) {
+  let nextDate = summary.most_urgent_due_date;
   let dateObjekt = new Date(nextDate);
   let formatedDate = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
@@ -89,21 +87,6 @@ function getNextUrgentDate() {
     day: "numeric",
   }).format(dateObjekt);
   document.getElementById("rendered-deadline").innerHTML = `${formatedDate}`;
-}
-
-/**
- * Retrieves indices and due dates of tasks marked as urgent and stores them in the `index_urgent` and `urgent_dates` arrays, respectively.
- */
-function getUrgentData() {
-  for (let i = 0; i < tasks.length; i++) {
-    if (tasks[i]["prio"][0] === "urgent") {
-      index_urgent.push(i);
-    }
-  }
-  for (let j = 0; j < index_urgent.length; j++) {
-    let date = tasks[index_urgent[j]]["due_date"];
-    urgent_dates.push(date);
-  }
 }
 
 /**
