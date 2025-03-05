@@ -16,17 +16,18 @@
    */
   function renderSubtaskProgress(element, id) {
     let progress = document.getElementById(id);
-  
-    if ("subtasks_done" in element) {
+    let completedSubtasks = element.subtasks.filter(subtask => subtask.completed === true);
+
+    if (completedSubtasks.length > 0) {
       progress.innerHTML = /*html*/ `
       <div id="subtask-progress">
-          <div id="progress-bar" style="width:${(100 / element.subtasks.length) * element.subtasks_done.length
+          <div id="progress-bar" style="width:${(100 / element.subtasks.length) * completedSubtasks.length
         }%"></div>
       </div>
-      <div id="subtask-counter">${element.subtasks_done.length}/${element.subtasks.length
+      <div id="subtask-counter">${completedSubtasks.length}/${element.subtasks.length
         } Subtasks</div>
       `;
-    } else {
+    } else if(element.subtasks.length > 0) {
       progress.innerHTML = /*html*/ `
       <div id="subtask-progress">
           <div id="progress-bar" style="width:${(100 / element.subtasks.length) * 0
@@ -43,27 +44,36 @@
    * @param {*} element 
    * @param {*} initialsCont 
    */
-  function renderIntialsinSmallTask(element, initialsCont) {
+  function renderInitialsInSmallTask(element, initialsCont) {    
     let users = element.assigned_users;
     if (users.length < 6) {
       for (let i = 0; i < users.length; i++) {
         const user = users[i];
+        const username = user.username;
+        const userInitials = getInitialsOfName(username);
         document.getElementById(initialsCont).innerHTML += `
-          <div class="test-initials" style="background-color: ${user.color}">${user.initials}</div>
+          <div class="test-initials" style="background-color: ${user.color}">${userInitials}</div>
         `;
       }
     }
-    if (users.length > 6) {
+    if (users.length >= 6) {
       for (let i = 0; i < users.length - (users.length - 5); i++) {
         const user = users[i];
+        const username = user.username;
+        const userInitials = getInitialsOfName(username);
         document.getElementById(initialsCont).innerHTML += `
-          <div class="test-initials" style="background-color: ${user.color}">${user.initials}</div>
+          <div class="test-initials" style="background-color: ${user.color}">${userInitials}</div>
         `;
       }
       document.getElementById(initialsCont).innerHTML += `
         <div class="test-initials" style="background-color: #2A3647">+${users.length - 5}</div>
       `;
     }
+  }
+
+  function getInitialsOfName(name) {
+    if(!name) return "";
+    return name.split(" ").map(word => word[0]).join("").toUpperCase();
   }
   
   /**
@@ -73,8 +83,8 @@
    * @param {*} id 
    */
   function renderTaskPrio(element, id) {
-    document.getElementById(id).innerHTML = `<img class="prio-icons" src="${element.prio[1]
-      }" alt="prio icon">`;
+    document.getElementById(id).innerHTML = `<img class="prio-icons" src="${element.prio.icon_path
+    }" alt="prio icon">`;
   }
 
     /**
@@ -140,8 +150,8 @@
       function renderPrioInTaskDetails(task, i) {
         let prio = document.getElementById(`prio-cont${i}`);
         prio.innerHTML = /*html*/`
-            <span>${task.prio[0].charAt(0).toUpperCase() + task.prio[0].slice(1)}</span>
-            <img src="${task.prio[1]}">
+            <span>${task.prio.level.charAt(0).toUpperCase() + task.prio.level.slice(1)}</span>
+            <img src="${task.prio.icon_path}">
         `;
       }
       
@@ -156,10 +166,12 @@
       
         for (let i = 0; i < task.assigned_users.length; i++) {
           const user = task.assigned_users[i];
+          const username = user.username
+          const userInitials = getInitialsOfName(username)
       
           contacts.innerHTML += `
                     <div class="assigned-single-contact">
-                        <div class="test-initials" style="background-color: ${user.color}">${user.initials}</div>
+                        <div class="test-initials" style="background-color: ${user.color}">${userInitials}</div>
                         <span>${user.username}</span>
                     </div>
                 `;
@@ -175,16 +187,28 @@
       function renderSubtasks(task, i) {
         let subtasks = document.getElementById(`subtasks-details${i}`);
         subtasks.innerHTML = "";
+        let checkbox_src;
       
         for (let j = 0; j < task.subtasks.length; j++) {
+          if(task.subtasks[j].completed) {
+            checkbox_src = '../assets/img/checkbox-check.svg'
+          } else {
+            checkbox_src = '../assets/img/checkbox-empty.svg'
+          }
           subtasks.innerHTML += /*html*/ `
                   <div class="subtask-cont">
-                      <div class="subtask-cont-img" onclick="moveToSubtasksDone(${i}, ${j})">
-                          <img id="checkbox${j}" src="${task.subtasks[j].checkbox_img}">
+                      <div class="subtask-cont-img" onclick="toggleSubtask(${i}, ${j})">
+                          <img id="checkbox${j}" src="${checkbox_src}">
                       </div>
-                      <div>${task.subtasks[j].subtask}</div>
+                      <div class="subtask-cont-text">${task.subtasks[j].subtask}</div>
                   </div>
               `;
+        }
+
+        if(task.subtasks.length == 0) {
+          document.getElementById(`subtasks-cont${i}`).classList.add('d-none');
+        } else {
+          document.getElementById(`subtasks-cont${i}`).classList.remove('d-none');
         }
       }
       
@@ -201,6 +225,52 @@
         }
       }
 
+
+  /**
+ * toggles the completion status of a subtask by updating its checkbox image
+ *
+ * @param {*} i
+ * @param {*} j
+ */
+  function toggleSubtask(i, j) {
+    let check = document.getElementById(`checkbox${j}`);
+    let task = tasks[i];
+    let taskId = tasks[i].id;
+    let subtaskId = task.subtasks[j].id;
+  
+    if (!task.subtasks[j].completed) {
+      check.src = "../assets/img/checkbox-check.svg";
+      task.subtasks[j].completed = true;
+      saveSubtaskStatus(taskId, subtaskId, task.subtasks[j].completed);
+    } else {
+      check.src = "../assets/img/checkbox-empty.svg";
+      task.subtasks[j].completed = false;
+      saveSubtaskStatus(taskId, subtaskId, task.subtasks[j].completed);
+    }
+    updateHTML();
+  }
+
+/**
+ * asynchronously sends a PATCH request to update the completion status of a specific subtask for a given task
+ * @param {*} taskId 
+ * @param {*} subtaskId 
+ * @param {*} subtaskBool 
+ * @returns 
+ */
+async function saveSubtaskStatus(taskId, subtaskId, subtaskBool) {
+  let data = {
+    completed: subtaskBool,
+  };
+  let response = await fetch('http://127.0.0.1:8000/task/' + taskId + '/subtask/' + subtaskId + '/', {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });  
+  return await response.json();
+}
+
 /**
  * populates the subtasksContent element with a list of subtasks from the subtasksEdit array
  */
@@ -209,12 +279,12 @@ function renderSubtasksEdit() {
     selectedSubtasks.innerHTML = "";
     for (let i = 0; i < subtasksEdit.length; i++) {
       const element = subtasksEdit[i];
-  
+
       selectedSubtasks.innerHTML += /*html*/ `
         <li id="subtask-${i}" class="subtask-item">
             <div class="dot"></div>
             <div class="subtask-text">
-                <span id="span-${i}" onclick="editSubtask('subtask-${i}', 'span-${i}', 'input-${i}')">${element.subtask}</span>
+                <span id="span-${i}" onclick="editSubtask('subtask-${i}', 'span-${i}', 'input-${i}'); editInSubtasksArr('${element.subtask}')">${element.subtask}</span>
             </div>
             <div class="subtask-icon">
                 <img onclick="editSubtask('subtask-${i}', 'span-${i}', 'input-${i}')" src="../assets/img/edit.svg" alt="edit">
@@ -225,5 +295,3 @@ function renderSubtasksEdit() {
         `;
     }
   }
-  
-    

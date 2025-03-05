@@ -55,7 +55,7 @@ function updateHTML() {
         .classList.add("d-none");
     }
     if ("assigned_users" in element) {
-      renderIntialsinSmallTask(element, `assigned-initials-to-do${i}`);
+      renderInitialsInSmallTask(element, `assigned-initials-to-do${i}`);
     }
   }
 
@@ -129,7 +129,7 @@ function updateHTML() {
         .classList.add("d-none");
     }
     if ("assigned_users" in element) {
-      renderIntialsinSmallTask(element, `assigned-initials-in-progress${i}`);
+      renderInitialsInSmallTask(element, `assigned-initials-in-progress${i}`);
     }
   }
   
@@ -202,7 +202,7 @@ function updateHTML() {
         .classList.add("d-none");
     }
     if ("assigned_users" in element) {
-      renderIntialsinSmallTask(
+      renderInitialsInSmallTask(
         element,
         `assigned-initials-await-feedback${i}`
       );
@@ -277,7 +277,7 @@ function saveKeyIndexDone() {
         .classList.add("d-none");
     }
     if ("assigned_users" in element) {
-      renderIntialsinSmallTask(element, `assigned-initials-done${i}`);
+      renderInitialsInSmallTask(element, `assigned-initials-done${i}`);
     }
   }
   
