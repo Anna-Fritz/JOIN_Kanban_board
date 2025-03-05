@@ -27,6 +27,7 @@
         <i class="blue-line"></i>
         <form
           onsubmit="login(); return false;"
+          method="POST"
           class="login-form"
           id="loginFrom"
         >
@@ -35,7 +36,7 @@
               class="input-login"
               type="email"
               placeholder="Email"
-              name="userEmail"
+              name="email"
               id="enterUserEmail"
               required
               autocomplete="username"
@@ -48,10 +49,10 @@
               class="input-login"
               type="password"
               placeholder="Password"
-              name="userPassword"
+              name="password"
               id="enterUserPassword"
               required
-              autocomplete="current-password"
+              autocomplete="new-password"
             />
             <img src="./assets/img/lock.png" alt="" />
           </div>

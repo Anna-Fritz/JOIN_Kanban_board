@@ -29,8 +29,6 @@ async function displayContacts(users) {
   for (let i = 0; i < sortedUsers.length; i++) {
     let user = sortedUsers[i];
     let color = user.color || generateRandomColor();
-    userColors[user.username] = color;
-    colors.push(color);
     container.innerHTML += renderContact(i, user, color, lastInitial);
     lastInitial = user.username[0].toUpperCase();
   }
@@ -86,14 +84,14 @@ function generateRandomColor() {
  * @returns
  */
 async function addContactS() {
-  let userNameInput = document.getElementById("addInputNameA");
-  let emailInput = document.getElementById("addInputEmailB");
-  let phoneInput = document.getElementById("addInputPhoneC");
+  let userNameInput = document.getElementById("addInputNameA").value;
+  let emailInput = document.getElementById("addInputEmailB").value;
+  let phoneInput = document.getElementById("addInputPhoneC").value;
   let color = generateRandomColor();
   let data = {
-    username: userNameInput.value,
-    email: emailInput.value,
-    contactNumber: phoneInput.value,
+    username: userNameInput,
+    email: emailInput,
+    contactNumber: phoneInput,
     color: color,
   };
   let response = await fetch(BASE_URL, {
@@ -104,9 +102,11 @@ async function addContactS() {
     body: JSON.stringify(data),
   });
   cleanInputFields();
+  await response.json()
+  await loadData();
+  displayContacts(loadedUserArray);
+  renderUserDetails(userNameInput);
   showSuccessPopUp();
-  window.location.reload();
-  return await response.json();
 }
 
 
@@ -163,8 +163,7 @@ function renderContactDetails(i) {
     a.username.localeCompare(b.username)
   );
   let user = sortedUsers[i];
-  let color = userColors[user.username] || user.color || generateRandomColor();
-  userColors[user.username] = color;
+  let color = user.color || generateRandomColor();
 
   let isMobile = window.innerWidth < 1192;
   let htmlContent = generateContactDetailsHTML(i, user, color, isMobile);
@@ -201,9 +200,9 @@ function getInitials(name) {
  * @returns
  */
 async function saveContact(userId) {
-  let editNameInput = document.getElementById("editInputName");
-  let editEmailInput = document.getElementById("editInputEmail");
-  let editPhoneInput = document.getElementById("editInputPhone");
+  let editNameInput = document.getElementById("editInputName").value;
+  let editEmailInput = document.getElementById("editInputEmail").value;
+  let editPhoneInput = document.getElementById("editInputPhone").value;
   let colorName;
   for(let i = 0; i < loadedUserArray.length; i++) {
     if(userId == loadedUserArray[i].id){
@@ -211,9 +210,9 @@ async function saveContact(userId) {
     }
   }
   let updatedData = {
-    username: editNameInput.value,
-    email : editEmailInput.value,
-    contactNumber: editPhoneInput.value,
+    username: editNameInput,
+    email : editEmailInput,
+    contactNumber: editPhoneInput,
     color: colorName
   };
   
@@ -229,6 +228,21 @@ async function saveContact(userId) {
   document.getElementById("render-contact-details").innerHTML = "";
   await loadData();
   displayContacts(loadedUserArray);
+  renderUserDetails(editNameInput);
+}
+
+/**
+ * sorts loaded user list by alphabet and finds user index to render contact details
+ * @param {*} username 
+ */
+function renderUserDetails(username) {
+  let sortedUsers = Object.values(loadedUserArray).sort((a, b) =>
+    a.username.localeCompare(b.username)
+  );
+  let index = sortedUsers.findIndex(user => user.username === username);
+  document.getElementById(`contact-info${index}`).classList.add('contact-card-click');
+  document.getElementById(`name${index}`).classList.add('contact-name');
+  renderContactDetails(index);
 }
 
 /**
