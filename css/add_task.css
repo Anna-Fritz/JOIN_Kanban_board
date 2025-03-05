@@ -47,10 +47,12 @@ body {
 }
 
 .field-text-flex {
+    position: relative;
     display: flex;
     flex-direction: column;
     margin-bottom: 24px;
 }
+
 #addTaskDiscriptionField {
     width: auto;
 }
@@ -231,6 +233,7 @@ ul {
 #categoryInput {
     z-index: 1001;
 }
+
 #addTaskCategory img {
     z-index: 1002;
 }
