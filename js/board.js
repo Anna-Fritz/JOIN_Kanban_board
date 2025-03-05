@@ -9,7 +9,7 @@ let index_done = [];
 let userlist = [];
 
 const ADD_URL =
-  "https://.firebasedatabase.app/";
+  "http://127.0.0.1:8000/task/";
 
 /**
  * Retrieves task data and updates the HTML content accordingly
@@ -17,19 +17,15 @@ const ADD_URL =
 async function loadTasks() {
   tasks = [];
   dbKeys = [];
-  let response = await fetch(ADD_URL + ".json");
+  let response = await fetch(ADD_URL);
   const data = await response.json();
-  if (data && typeof data === "object" && data.tasks) {
-    tasksArray = data.tasks;
-    let ObjEntries = Object.entries(tasksArray);
-    for (let index = 0; index < ObjEntries.length; index++) {
-      const task = ObjEntries[index][1];
-      const dbkey = ObjEntries[index][0];
-      tasks.push(task);
-      dbKeys.push(dbkey);
+  tasks = data
+    for (let index = 0; index < tasks.length; index++) {
+      const taskId = tasks[index].id;
+      dbKeys.push(taskId);
     }
+
     updateHTML();
-  }
 }
 
 /**
@@ -77,26 +73,26 @@ async function addTask() {
   let data = {
     title: taskTitle.value,
     description: descriptionName.value,
-    assigned_users: assignedUsersArr,
+    assigned_user_id: assignedUsersArr,
     due_date: taskDate.value,
-    prio: prioArr,
+    prio_id: prioArr,
     subtasks: subtasksArr,
-    category: categoryArr,
+    category_id: categoryArr,
     status: "to_do",
   };
 
-  let response = await fetch(ADD_URL + "/tasks" + ".json", {
+  let response = await fetch(ADD_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
+
   showTaskCreatedPopUp();
   setTimeout(function () {
     location.href = "../html/board.html";
   }, 1200);
-
   return await response.json();
 }
 
@@ -112,14 +108,14 @@ async function addTaskPopupBoard() {
   let data = {
     title: taskTitle.value,
     description: descriptionName.value,
-    assigned_users: assignedUsersArr,
+    assigned_user_id: assignedUsersArr,
     due_date: taskDate.value,
-    prio: prioArr,
+    prio_id: prioArr,
     subtasks: subtasksArr,
-    category: categoryArr,
+    category_id: categoryArr,
     status: "to_do",
   };
-  let response = await fetch(ADD_URL + "/tasks" + ".json", {
+  let response = await fetch(ADD_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -139,12 +135,10 @@ async function addTaskPopupBoard() {
 async function deleteTask(i) {
   closeTaskDetails();
 
-  let taskKey = dbKeys[i];
-  let response = await fetch(ADD_URL + "tasks/" + taskKey + ".json", {
+  await fetch(ADD_URL + i + "/", {
     method: "DELETE",
   });
   await loadTasks();
-  return await response.json();
 }
 
 /**
@@ -155,6 +149,7 @@ async function deleteTask(i) {
 function startDragging(id) {
   
   currentDraggedElement = id;
+  
 }
   
 /**
@@ -192,7 +187,7 @@ function removeHighlight(id) {
 function moveTo(status) {
   tasks[currentDraggedElement]["status"] = status;
   updateHTML();
-  saveProgress();
+  saveProgress(currentDraggedElement);
 }
   
   /**
@@ -203,7 +198,7 @@ function moveTo(status) {
   function moveToToDo(id) {
     tasks[id]["status"] = "to_do";
     updateHTML();
-    saveProgress();
+    saveProgress(id);
   }
   
   /**
@@ -214,7 +209,7 @@ function moveTo(status) {
   function moveToInProgress(id) {
     tasks[id]["status"] = "in_progress";
     updateHTML();
-    saveProgress();
+    saveProgress(id);
   }
   
   /**
@@ -225,7 +220,7 @@ function moveTo(status) {
   function moveToAwaitFeedback(id) {
     tasks[id]["status"] = "await_feedback";
     updateHTML();
-    saveProgress();
+    saveProgress(id);
   }
   
   /**
@@ -236,7 +231,7 @@ function moveTo(status) {
   function moveToDone(id) {
     tasks[id]["status"] = "done";
     updateHTML();
-    saveProgress();
+    saveProgress(id);
   }
   
   /**
@@ -254,13 +249,18 @@ function moveTo(status) {
    * @param {*} path 
    * @returns 
    */
-  async function saveProgress(path = "tasks") {
-    let response = await fetch(ADD_URL + path + ".json", {
-      method: "PUT",
+  async function saveProgress(id) {
+    let currentTask = tasks[id];
+    let currentTaskId = tasks[id].id;
+    let data = {
+      status: currentTask.status
+    }
+    let response = await fetch(ADD_URL + currentTaskId + "/", {
+      method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(tasksArray),
+      body: JSON.stringify(data),
     });
     return await response.json();
   }
@@ -286,6 +286,7 @@ function moveTo(status) {
 function closeTaskDetails() {
   document.getElementById("task-details-overlay").classList.add("d-none");
   // document.getElementById('task-details-Popup').style = `left: 100%`;
+  updateHTML();
 }
 
 /**
@@ -294,16 +295,9 @@ function closeTaskDetails() {
 async function findTask() {
   tasks = [];
   dbKeys = [];
-  let response = await fetch(ADD_URL + ".json");
+  let response = await fetch(ADD_URL);
   const data = await response.json();
-  if (data && typeof data === "object" && data.tasks) {
-    tasksArray = data.tasks;
-    let ObjEntries = Object.entries(tasksArray);
-    for (let index = 0; index < ObjEntries.length; index++) {
-      const task = ObjEntries[index][1];
-      tasks.push(task);
-    }
-  }
+  tasks = data;
   let search = document.getElementById("search-input").value;
   let filter = tasks.filter(
     (x) =>
