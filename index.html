@@ -4,15 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login</title>
-    <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
-    <link rel="stylesheet" href="../css/login_signup.css" />
-    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="icon" id="favicon" type="image/svg+xml" href="./favicon.svg" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/svg+xml" href="./favicon_dark.svg" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/png" href="./favicon-96x96.png" sizes="96x96" />
+    <link rel="shortcut icon" href="./favicon.ico"  />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Join" />
+    <link rel="manifest" href="./site.webmanifest" />    
+    <link rel="stylesheet" href="./css/login_signup.css" />
+    <link rel="stylesheet" href="./css/style.css" />
   </head>
-  <body onload="checkRememberedLoginData()">
+  <body onload="refreshToken(), setFavicon()">
     <div class="background-logo"></div>
     <img
       class="logo-first-page"
-      src="../assets/img/login_logo.png"
+      src="./assets/img/login_logo.png"
       alt="Logo"
     />
 
@@ -33,8 +39,9 @@
               name="userEmail"
               id="enterUserEmail"
               required
+              autocomplete="username"
             />
-            <img src="../assets/img/mail.jpg" alt="" />
+            <img src="./assets/img/mail.jpg" alt="" />
           </div>
           <span id="loginEmailInputError" class="loginError"></span>
           <div class="input-container">
@@ -45,8 +52,9 @@
               name="userPassword"
               id="enterUserPassword"
               required
+              autocomplete="current-password"
             />
-            <img src="../assets/img/lock.png" alt="" />
+            <img src="./assets/img/lock.png" alt="" />
           </div>
           <span id="loginPasswordInputError" class="loginError"></span>
           <div class="save-forgot-container">
@@ -54,7 +62,7 @@
               <input
                 class="input-login"
                 type="checkbox"
-                name="rememberMeCheckbox"
+                name="remember"
                 id="rememberMeCheckbox"
               />
               <p>Remember me</p>
@@ -64,7 +72,7 @@
             <button onclick="validateLoginEmailInput()" class="btn-filled">
               Log in
             </button>
-            <a class="btn-outline sign-up-link" href="../html/summary.html">
+            <a class="btn-outline sign-up-link" href="./html/summary.html">
               Guest Login
             </a>
           </div>
@@ -72,20 +80,20 @@
         <div class="sign-up-box-container">
           <div class="sign-up-box">
             <p href="">Not a Join user?</p>
-            <a href="../html/signup.html" class="btn-filled sign-up-link"
+            <a href="./html/signup.html" class="btn-filled sign-up-link"
               >Sign up</a
             >
           </div>
         </div>
         <footer class="login-footer">
           <a
-            href="./read_only_privacy_policy.html"
+            href="./html/read_only_privacy_policy.html"
             target="_blank"
             rel="noopener noreferrer"
             >Privacy Policy</a
           >
           <a
-            href="./read_only_legal_notice.html"
+            href="./html/read_only_legal_notice.html"
             target="_blank"
             rel="noopener noreferrer"
             >Legal notice</a
@@ -98,6 +106,6 @@
       Login successfull
     </div>
 
-    <script src="../js/login_signup.js"></script>
+    <script src="./js/login_signup.js"></script>
   </body>
 </html>

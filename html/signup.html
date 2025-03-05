@@ -10,7 +10,7 @@
   <body>
     <div class="sign-up-card">
       <div class="sign-up-arrow">
-        <a href="../html/index.html" id="blueArrowSingup">
+        <a href="../index.html" id="blueArrowSingup">
           <img src="../assets/img/blue_arrow_singup.jpg" alt="" />
         </a>
         <h1>Sign up</h1>
@@ -26,6 +26,7 @@
             placeholder="Name"
             name="userName"
             id="userName"
+            autocomplete="username"
           />
           <img src="../assets/img/person.jpg" alt="" />
         </div>
@@ -38,6 +39,7 @@
             placeholder="Email"
             name="userEmail"
             id="userEmail"
+            autocomplete="email"
           />
           <img src="../assets/img/mail.jpg" alt="" />
         </div>
@@ -51,6 +53,7 @@
             name="userPassword"
             id="userPassword"
             required
+            autocomplete="new-password"
           />
           <img src="../assets/img/lock.png" alt="" />
         </div>
@@ -64,6 +67,7 @@
             name="userPassword"
             id="confirmUserPassword"
             required
+            autocomplete="new-password"
           />
           <img src="../assets/img/lock.png" alt="" />
         </div>
@@ -92,6 +96,7 @@
         <div class="btn-container btn-login-flex">
           <div onclick="validateNameInput()" class="btn-filled sign-up-btn">Sign Up</div>
         </div>
+        <div id="error-message" class="error-message"></div>
       </form>
       <footer class="login-footer">
         <a

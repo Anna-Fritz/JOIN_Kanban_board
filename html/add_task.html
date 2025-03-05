@@ -39,7 +39,7 @@
                   id="addTaskInputTitle"
                   type="text"
                   placeholder="Enter a title"
-                  maxlength="40"
+                  maxlength="60"
                 />
                 <span id="addTitleError" class="validSpanTitle"></span>
               </div>
@@ -58,7 +58,7 @@
                 <label>Assigned to</label>
                 <input
                   class="input-addtask"
-                  onclick="showUsers()"
+                  onclick="showUsers(), stop(event)"
                   oninput="filterUsers()"
                   id="userNameInput"
                   type="text"
@@ -66,7 +66,7 @@
                   maxlength="40"
                 />
                 <img
-                  onclick="showUsers()"
+                  onclick="showUsers(), stop(event)"
                   id="arrowDropMenuAssigned"
                   src="../assets/img/arrow_drop_down.png"
                   alt=""
@@ -144,7 +144,7 @@
                 </label>
                 <input
                   class="input-addtask"
-                  onclick="openCategories()"
+                  onclick="openCategories(), stop(event)"
                   id="categoryInput"
                   type="text"
                   placeholder="Select task category"
@@ -152,10 +152,9 @@
                   readonly
                 />
                 <img
-                  onclick="openCategories()"
+                  onclick="openCategories(), stop(event)"
                   id="arrowDropMenuCategory"
                   src="../assets/img/arrow_drop_down.png"
-                  alt=""
                 />
                 <div id="dropDownCategoryMenu"></div>
                 <span id="addCategoryError" class="validSpanCategory"></span>
@@ -172,7 +171,7 @@
                     class="plus-minus-drop-menu"
                     type="text"
                     placeholder="Add a new subtask"
-                    maxlength="40"
+                    maxlength="100"
                     onfocus="showClearButton()"
                   />
                   <div class="input-icons">
