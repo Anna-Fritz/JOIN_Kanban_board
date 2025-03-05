@@ -2,7 +2,7 @@
  * retrieves user data from a database
  */
 async function getUsersFromDB() {
-    let response = await fetch(ADD_URL + "users" + ".json");
+    let response = await fetch(USERS_URL);
     const data = await response.json();
     let ObjValues = Object.values(data);
     userlist = [];
@@ -43,7 +43,7 @@ async function getUsersFromDB() {
       removeUserFromSelection(user.username);
     } else {
       selectedUsers.add(user.username);
-      addUserToSelection(user, getInitials(user.username));
+      addUserToSelection(user, user.id);
     }
   }
   
@@ -74,66 +74,25 @@ async function getUsersFromDB() {
         subtasksEdit.splice(i, 1);
       }
     }
-    for (let i = 0; i < subtasksEdit_done.length; i++) {
-      const element = subtasksEdit_done[i];
-      if (element == subtask) {
-        subtasksEdit_done.splice(i, 1);
+    renderSubtasksEdit();
+  }
+
+  function saveInSubtasksArr(previousSubtask, newSubtask) {
+    for (let i = 0; i < subtasksEdit.length; i++) {
+      const element = subtasksEdit[i];
+      if (element.subtask == previousSubtask) {
+        element.subtask = newSubtask;
+      }
+    }
+    for (let i = 0; i < subtasksArr.length; i++) {
+      const element = subtasksArr[i];
+      if (element.subtask == previousSubtask) {
+        element.subtask = newSubtask;
       }
     }
     renderSubtasksEdit();
   }
-  /**
- * toggles the completion status of a subtask by updating its checkbox image and corresponding status in the task's subtasks_done array
- *
- * @param {*} i
- * @param {*} j
- */
-function moveToSubtasksDone(i, j) {
-    let check = document.getElementById(`checkbox${j}`);
-    let task = tasks[i];
-    let subtask = task.subtasks[j].subtask;
-  
-    if (task.subtasks[j]["checkbox_img"] === "../assets/img/checkbox-empty.svg") {
-      checkSubtasksStatus(check, task, subtask, i, j);
-    } else {
-      check.src = "../assets/img/checkbox-empty.svg";
-      task.subtasks[j]["checkbox_img"] = "../assets/img/checkbox-empty.svg";
-      let index = task["subtasks_done"].indexOf(subtask);
-      task.subtasks_done.splice(index, 1);
-      saveProgress();
-      updateHTML();
-    }
-  }
-  
-  /**
-   * updates the status of a subtask by marking it as completed with a checked checkbox image
-   *
-   * @param {*} check
-   * @param {*} task
-   * @param {*} subtask
-   * @param {*} i
-   * @param {*} j
-   */
-  function checkSubtasksStatus(check, task, subtask, i, j) {
-    if ("subtasks_done" in tasks[i]) {
-      subtasksArr_done = tasks[i].subtasks_done;
-      check.src = "../assets/img/checkbox-check.svg";
-      subtasksArr_done.push(subtask);
-      tasks[i].subtasks_done = subtasksArr_done;
-      task.subtasks[j]["checkbox_img"] = "../assets/img/checkbox-check.svg";
-      saveProgress();
-      updateHTML();
-    } else {
-      subtasksArr_done = [];
-      check.src = "../assets/img/checkbox-check.svg";
-      subtasksArr_done.push(subtask);
-      tasks[i].subtasks_done = subtasksArr_done;
-      task.subtasks[j]["checkbox_img"] = "../assets/img/checkbox-check.svg";
-      saveProgress();
-      updateHTML();
-    }
-  }
-  
+
   /**
  * This function generates the Task Details Edit HTML into PopUp, fetches Data from Task and fill it into Edit Form
  *
@@ -143,12 +102,9 @@ async function openEdit(i) {
     let taskDetails = document.getElementById("task-details-Popup");
     taskDetails.innerHTML = generateTaskDetailsEditHTML(i);
   
-    let taskKey = dbKeys[i];
+    let task = tasks[i];
   
-    let response = await fetch(ADD_URL + "tasks/" + taskKey + ".json");
-    const data = await response.json();
-  
-    fillEditForm(data);
+    fillEditForm(task);
   }
   
   /**
@@ -159,10 +115,9 @@ async function openEdit(i) {
   function fillEditForm(data) {
     let title = document.getElementById("editTitle");
     let description = document.getElementById("editDescription");
-    let date = document.getElementById("editDueDate");
+    let date = document.getElementById("editDueDate");    
   
-    categoryArr.push(data.category[0]);
-    categoryArr.push(data.category[1]);
+    categoryArr = data.category.id;
   
     title.value = data.title;
   
@@ -183,15 +138,15 @@ async function openEdit(i) {
    */
   function firstcheckIfKeysInData(data) {
     if ("prio" in data) {
-      document.getElementById(data.prio[0]).click();
-      prioArrEdit.push(data.prio[0]);
-      prioArrEdit.push(data.prio[1]);
+      document.getElementById(data.prio.level).click();
+      prioArrEdit = data.prio.id;
     }
     if ("assigned_users" in data) {
       assignedUsersEdit = [];
       for (let i = 0; i < data.assigned_users.length; i++) {
         const user = data.assigned_users[i];
         assignedUsersEdit.push({
+          id: user.id,
           initials: `${user.initials}`,
           username: `${user.username}`,
           color: `${user.color}`,
@@ -213,20 +168,13 @@ async function openEdit(i) {
         const element = data.subtasks[i];
   
         subtasksEdit.push({
-          checkbox_img: `${element.checkbox_img}`,
           subtask: `${element.subtask}`,
         });
       }
       renderSubtasksEdit();
     }
-    if ("subtasks_done" in data) {
-      subtasksEdit_done = [];
-      for (let i = 0; i < data.subtasks_done.length; i++) {
-        const element = data.subtasks_done[i];
-  
-        subtasksEdit_done.push(element.subtask);
-      }
-    }
+
+    statusEdit = data.status;
   }
   
   /**
@@ -242,15 +190,17 @@ async function openEdit(i) {
     let data = {
       title: taskTitle.value,
       description: descriptionName.value,
-      assigned_users: assignedUsersEdit,
+      assigned_user_id: assignedUsersEdit,
       due_date: taskDate.value,
-      prio: prioArrEdit,
+      prio_id: prioArrEdit,
+      category_id: categoryArr,
       subtasks: subtasksEdit,
+      status: statusEdit
     };
-  
+
     let taskKey = dbKeys[i];
-    let response = await fetch(ADD_URL + "tasks/" + taskKey + ".json", {
-      method: "PATCH",
+    let response = await fetch(ADD_URL + taskKey + "/", {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
@@ -282,13 +232,13 @@ async function openEdit(i) {
    */
   function showEditSuccessPopUp() {
     let editSuccessElement = document.getElementById("edit-success");
-    editSuccessElement.style.display = "flex"; // Popup einblenden
+    editSuccessElement.style.display = "flex";
     setTimeout(() => {
-      editSuccessElement.style.transform = "translate(-50%, -50%)"; // Slidet in die Mitte
-      editSuccessElement.style.opacity = "1"; // Sichtbar machen
-    }, 500); // Kurze Verzögerung für den Slide-Effekt
+      editSuccessElement.style.transform = "translate(-50%, -50%)"; 
+      editSuccessElement.style.opacity = "1"; 
+    }, 500); 
   
-    setTimeout(closeEditSuccessPopUp, 3000); // Popup nach einer Weile ausblenden
+    setTimeout(closeEditSuccessPopUp, 3000); 
   }
   
   /**
@@ -296,10 +246,10 @@ async function openEdit(i) {
    */
   function closeEditSuccessPopUp() {
     let editSuccessElement = document.getElementById("edit-success");
-    editSuccessElement.style.transform = "translate(100%, -50%)"; // Slidet wieder nach rechts
-    editSuccessElement.style.opacity = "0"; // Unsichtbar machen
+    editSuccessElement.style.transform = "translate(100%, -50%)";
+    editSuccessElement.style.opacity = "0";
     setTimeout(() => {
-      editSuccessElement.style.display = "none"; // Popup ausblenden
-    }, 500); // Wartezeit für den Slide-Out-Effekt
+      editSuccessElement.style.display = "none";
+    }, 500);
   }
   
