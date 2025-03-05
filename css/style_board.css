@@ -200,6 +200,10 @@ input::placeholder {
     margin-bottom: 15px;
     cursor: pointer;
     color: #2A3647;
+    transition: 0.75s ease;
+}
+.task:hover {
+    transform: rotate(6deg);
 }
 .task-head {
     display: flex;
@@ -445,7 +449,7 @@ input::placeholder {
 .subtask-cont {
     display: flex;
     align-items: center;
-    gap: 10px;
+    /* gap: 10px; */
     margin-top: 12px;
     padding: 5px 10px;
     border-radius: 10px;
@@ -460,10 +464,14 @@ input::placeholder {
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    margin-right: 15px;
 }
 .subtask-cont:hover .subtask-cont-img {
     background-color: #bbbbbb;
     border-radius: 10px;
+}
+.subtask-cont-text {
+    max-width: 390px;
 }
 .task-subtitles {
     color: #42526E;
@@ -629,8 +637,12 @@ input::placeholder {
     .task-category-detail {
         flex: 1;
 
+    }     
+}
+@media(max-width: 704px) {
+    .subtask-cont-text {
+        width: 300px;
     }
-        
 }
 @media(max-width: 600px) {
     .search-container {
@@ -646,7 +658,9 @@ input::placeholder {
         height: 100%;
         width: 100%;
     }
-
+    .subtask-cont-text {
+        width: 350px;
+    }
 }
 
 .edit-success {
