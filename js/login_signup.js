@@ -1,6 +1,7 @@
 let users = [];
-const REG_URL =
-  "https://.firebasedatabase.app/regUsers";
+const REG_URL = "http://127.0.0.1:8000/api/auth/registration/";
+const LOGIN_URL = "http://127.0.0.1:8000/api/auth/login/";
+const BASE_URL = "http://127.0.0.1:8000/user/";
 
 /**
  * Adding a user to the Database incl. popup, timing, form reset etc.
@@ -17,8 +18,9 @@ async function addUser() {
     signupSuccessElement.classList.remove("d-none");
     setTimeout(showCreatedUserSuccessPopUp, 100);
     addUserToDb();
+    addUserToContactList();
     setTimeout(function () {
-      window.location.href = "../html/index.html";
+      window.location.href = "../index.html";
     }, 1500);
   }
 
@@ -51,22 +53,77 @@ async function loadUserFromDb() {
  * @returns
  */
 async function addUserToDb() {
-  let username = document.getElementById("userName");
+  let username = splitUsername();
   let mail = document.getElementById("userEmail");
   let password = document.getElementById("userPassword");
+  let confirmedPassword = document.getElementById("confirmUserPassword");
+  let data = {
+    username: `${username}`,
+    email: `${mail.value}`,
+    password: `${password.value}`,
+    confirmed_password: `${confirmedPassword.value}`,
+  };
+  try {
+    let response = await fetch(REG_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      let errorData = await response.json();
+      document.getElementById("error-message").innerHTML = errorData.error;
+      throw new Error(errorData.error || "An unknown error occurred");
+    }
+
+    let userData = await response.json();
+    return userData;
+  } catch (error) {
+    return error.error;
+  }
+}
+
+/**
+ * retrieves the value of the username input, formats it by trimming spaces, replacing spaces with hyphens, and converting it to lowercase; if the formatted name is too short, it displays an error message
+ * @returns 
+ */
+function splitUsername() {
+  let username = document.getElementById("userName").value;
+  let fullName = username.trim().replace(" ", "-").toLowerCase();
+  if (fullName.length < 2) {
+    document.getElementById("addNameError").innerHTML =
+      "Please enter first and last name";
+  } else {
+    return fullName;
+  }
+}
+
+async function addUserToContactList() {
+  let username = document.getElementById("userName");
+  let mail = document.getElementById("userEmail");
+  let color = generateRandomColor();
+
   let data = {
     username: `${username.value}`,
     email: `${mail.value}`,
-    password: `${password.value}`,
+    contactNumber: `Not Provided`,
+    color: color,
   };
-  let response = await fetch(REG_URL + ".json", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-  return await response.json();
+
+  try {
+    let response = await fetch(BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    return response;
+  } catch (error) {
+    return error.error;
+  }
 }
 
 /**
@@ -78,34 +135,33 @@ async function login() {
   let userPassword = document.getElementById("enterUserPassword").value;
   let wrongCredentials = document.getElementById("loginPasswordInputError");
 
-  let users = await loadUserFromDb();
-  if (users && users.length > 0) {
-    let user = users.find(
-      (u) => u.email === userEmail && u.password === userPassword
-    );
+  let data = {
+    email: userEmail,
+    password: userPassword,
+    remember: document.querySelector('input[name="remember"]').checked // Checkbox-Wert holen
+  };
 
-    if (user) {
-      saveLoginData();
-      const loginSuccessElement = document.getElementById("loginSuccess");
-      loginSuccessElement.classList.remove("d-none");
-      setTimeout(loginSuccessfullPopUp, 100);
-      saveUsernameLocal(user.username);
-      users = [];
-      setTimeout(function () {
-        window.location.href = "../html/summary.html";
-      }, 1500);
-    } else {
-      wrongCredentials.innerHTML = "Your Email or Password doesn't exist.";
-    }
+  let login = await fetch(LOGIN_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (login.ok) {
+    const data = await login.json();
+    saveLoginData(data);
+    const loginSuccessElement = document.getElementById("loginSuccess");
+    loginSuccessElement.classList.remove("d-none");
+    setTimeout(loginSuccessfullPopUp, 100);
+    users = [];
+    setTimeout(function () {
+      window.location.href = "../html/summary.html";
+    }, 1500);
+  } else {
+    wrongCredentials.innerHTML = "Invalid email or password";
   }
-}
-
-/**
- * Localstorage username for greeting in summary
- * @param {*} username
- */
-function saveUsernameLocal(username) {
-  localStorage.setItem("username", username);
 }
 
 /**
@@ -126,51 +182,51 @@ function validateNameInput() {
 
 function validateEmailInput() {
   let x = document.getElementById("userEmail").value;
-  let xName = document.getElementById("addEmailError");
+  let xMail = document.getElementById("addEmailError");
   let emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (x == "") {
-    xName.innerHTML = "Please enter your Email";
+    xMail.innerHTML = "Please enter your Email";
     return false;
   } else if (!emailRegex.test(x)) {
-    xName.innerHTML = "Please enter a valid Email address";
+    xMail.innerHTML = "Please enter a valid Email address";
     return false;
   } else {
-    xName.innerHTML = "";
+    xMail.innerHTML = "";
     return validatePasswordInput();
   }
 }
 
 function validatePasswordInput() {
   let x = document.getElementById("userPassword").value;
-  let xName = document.getElementById("addPasswordError");
+  let xPw = document.getElementById("addPasswordError");
   if (x == "") {
-    xName.innerHTML = "Please enter a Password";
+    xPw.innerHTML = "Please enter a Password";
     return false;
   } else {
-    xName.innerHTML = "";
+    xPw.innerHTML = "";
     return validateConfirmPasswordInput();
   }
 }
 
 function validateConfirmPasswordInput() {
   let x = document.getElementById("confirmUserPassword").value;
-  let xName = document.getElementById("addConfirmPasswordError");
+  let xConfirmPw = document.getElementById("addConfirmPasswordError");
   if (x == "" || x != document.getElementById("userPassword").value) {
-    xName.innerHTML = "Please confirm your Password";
+    xConfirmPw.innerHTML = "Please confirm your Password";
     return false;
   } else {
-    xName.innerHTML = "";
+    xConfirmPw.innerHTML = "";
     return validatePrivacyInput();
   }
 }
 
 function validatePrivacyInput() {
   let x = document.getElementById("acceptPp").checked;
-  let xName = document.getElementById("addPrivacyError");
+  let xPrivacy = document.getElementById("addPrivacyError");
   if (x != true) {
-    xName.innerHTML = "Please accept our Privacy Policy";
+    xPrivacy.innerHTML = "Please accept our Privacy Policy";
   } else {
-    xName.innerHTML = "";
+    xPrivacy.innerHTML = "";
     return addUser();
   }
 }
@@ -179,20 +235,20 @@ function validatePrivacyInput() {
  * Popups for creating a new user and logging in
  */
 function showCreatedUserSuccessPopUp() {
-  if (window.innerWidth < 1350) {
-    document.getElementById("userCreatedSuccess").style = `left: 1%;`;
+  if (window.innerWidth > 650) {
+    document.getElementById("userCreatedSuccess").style = `left: 39%;`;
   } else {
-    document.getElementById("userCreatedSuccess").style = `left: 1%;`;
+    document.getElementById("userCreatedSuccess").style = `left: 15%;`;
   }
 }
 
 function loginSuccessfullPopUp() {
   const loginSuccessElement = document.getElementById("loginSuccess");
   loginSuccessElement.classList.remove("d-none");
-  if (window.innerWidth < 1350) {
-    loginSuccessElement.style.left = "1%";
+  if (window.innerWidth > 650) {
+    loginSuccessElement.style.left = "39%";
   } else {
-    loginSuccessElement.style.left = "1%";
+    loginSuccessElement.style.left = "15%";
   }
 }
 
@@ -231,33 +287,70 @@ function validateLoginPasswordInput() {
 /**
  * Remember me checkbox saving data to localstorage
  */
-function saveLoginData() {
-  const email = document.getElementById("enterUserEmail").value;
-  const password = document.getElementById("enterUserPassword").value;
-  const rememberMe = document.getElementById("rememberMeCheckbox").checked;
+function saveLoginData(data) {
+  let fullName = data.username
+    .replace("-", " ")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 
-  if (rememberMe) {
-    localStorage.setItem("rememberedEmail", email);
-    localStorage.setItem("rememberedPassword", password);
-    localStorage.setItem("rememberMeChecked", rememberMe);
+  localStorage.setItem("username", fullName);
+  localStorage.setItem("user_id", data.user_id);
+  localStorage.setItem("accessToken", data.accessToken);
+}
+
+/**
+ * checks for an existing access token in localStorage, and if present, sends a request to refresh the token; if successful, it updates the stored access token, otherwise redirects the user to the login page
+ * @returns 
+ */
+async function refreshToken() {
+  const accessToken = localStorage.getItem("accessToken");
+    
+    if (!accessToken) {
+        return;
+    }
+
+  const response = await fetch("http://localhost:8000/api/auth/login/refresh/", {
+      method: "POST",
+      credentials: "include", // included cookie
+  });
+
+  if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem("accessToken", data.access); // save new accessToken
   } else {
-    localStorage.removeItem("rememberedEmail");
-    localStorage.removeItem("rememberedPassword");
-    localStorage.removeItem("rememberMeChecked");
+      console.error("Session abgelaufen. Bitte neu anmelden.");
+      window.location.href = "../../index.html";
   }
 }
 
 /**
- * Checking localstorage for saved logindata
+ * checks if users color-scheme is dark and sets the appropriate favicon
  */
-function checkRememberedLoginData() {
-  const savedEmail = localStorage.getItem("rememberedEmail");
-  const savedPassword = localStorage.getItem("rememberedPassword");
-  const rememberMeChecked = localStorage.getItem("rememberMeChecked");
+function setFavicon() {
+  const darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const favicon = document.getElementById("favicon");
 
-  if (savedEmail && savedPassword && rememberMeChecked) {
-    document.getElementById("enterUserEmail").value = savedEmail;
-    document.getElementById("enterUserPassword").value = savedPassword;
-    document.getElementById("rememberMeCheckbox").checked = true;
+  if (darkModeMediaQuery.matches) {
+    favicon.href = "favicon_dark.svg"; // Dark Mode Favicon
+  } else {
+    favicon.href = "favicon.svg"; // Light Mode Favicon
   }
+}
+
+window
+  .matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", setFavicon);
+
+/**
+ * Generating a random CSS Color for the contactlist
+ * @returns
+ */
+function generateRandomColor() {
+  const letters = "0123456789ABCDEF";
+  let color = "#";
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 }
