@@ -8,7 +8,7 @@ JOIN is a task management tool that visualizes the status and responsibilities o
 - Assignment of users and subtasks
 - Drag & drop for status changes
 - Contact management (add, edit, delete)
-- Overview page with task statistics and deadlines
+- Summary page with task statistics and deadlines
 - User authentication with a custom backend
 - Guest login for quick testing of the web app
 
@@ -60,7 +60,7 @@ Alternatively, opening `index.html` directly in a browser is sufficient.
 - **Drag & Drop**: Easily move tasks between different statuses.
 - **User Management**: Add, edit, and delete contacts.
 - **REST API-based Authentication**: Login with access and refresh tokens.
-- **Overview Page**: Displays a summary of the current task board.
+- **Summary Page**: Displays an overview of the current task board.
 - **Guest Access**: Allows quick testing of the application without registration.
 
 ---
