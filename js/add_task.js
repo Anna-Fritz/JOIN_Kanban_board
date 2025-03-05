@@ -3,38 +3,90 @@ let categoriesContainerClick = false;
 let assignedContainerClick = false;
 let userList = [];
 let subtaskIdCounter = 0;
-let categories = [
-  {
-    category: "User Story",
-    "bg-color": "#0038FF",
-  },
-  {
-    category: "Technical Task",
-    "bg-color": "#1FD7C1",
-  },
-];
-let prioArr = [];
-let prioArrEdit = [];
+let prioArr;
+let prioArrEdit;
 let subtasksArr = [];
 let subtasksEdit = [];
-let subtasksEdit_done = [];
-let subtasksArr_done = [];
-let categoryArr = [];
+let categoryArr;
 let assignedUsersArr = [];
 let assignedUsersEdit = [];
 let selectedUsers = new Set();
+let prio_data = []
+let category_data = []
+let statusEdit;
 
 /**
- * Adding Firebase Realtime Database URL
+ * Adding backend task URL
  */
-const ADDTASK_URL =
-  "https://firebasedatabase.app/";
+const PRIO_URL =
+  "http://127.0.0.1:8000/prio/";
+
+
+/**
+* Adding backend category URL
+*/
+ const CATEGORY_URL =
+   "http://127.0.0.1:8000/category/";
+
+
+  /**
+ * Adding backend user URL
+ */
+const USERS_URL =
+  "http://127.0.0.1:8000/user/"
+
+/**
+ * asynchronously calls two functions to fetch category and priority data
+ */
+async function getTaskOptions() {
+  getCategoryData();
+  getPrioData();
+}
+
+/**
+ * asynchronously fetches priority data
+ * @returns
+ */
+async function getPrioData() {
+  try {
+    let response = await fetch(PRIO_URL);
+    const data = await response.json();
+    if (data) {
+      prio_data = data;
+      return data;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    return [];
+  }
+}
+
+/**
+ * asynchronously fetches category data
+ * @returns 
+ */
+async function getCategoryData() {
+  try {
+    let response = await fetch(CATEGORY_URL);
+    const data = await response.json();
+    if (data) {
+      category_data = data;
+      return data;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    return [];
+  }
+}
 
 /**
  * Toggle button function. Handles which button is active/checked and unchecks the others
  * @param {*} prioState
  */
 function toggleButton(prioState) {
+  getTaskOptions();
   prioArrEdit = [];
   let button = document.getElementById(prioState);
   let img = document.getElementById(prioState + "Img");
@@ -54,12 +106,14 @@ function toggleButton(prioState) {
     button.classList.add(`btn-${prioState}-active`);
     img.src = `../assets/img/Prio_${prioState}_white.png`;
     selectedPrio = prioState;
-    prioArr = [];
-    let prioImgSource = `../assets/img/prio_${prioState}.svg`;
-    prioArr.push(prioState);
-    prioArr.push(prioImgSource);
-    prioArrEdit.push(prioState);
-    prioArrEdit.push(prioImgSource);
+    prioArr = 2;
+    prioArrEdit = 2;
+  }
+  if (prioState != 'medium') {
+    prioObj = prio_data.filter(obj => obj["level"] === selectedPrio);
+    prioId = prioObj[0].id
+    prioArr = prioId;
+    prioArrEdit = prioId;  
   }
 }
 
@@ -71,13 +125,13 @@ function renderCategories() {
   let categoryContainer = document.getElementById("dropDownCategoryMenu");
   categoryContainer.innerHTML = "";
 
-  for (let i = 0; i < categories.length; i++) {
-    const category = categories[i]["category"];
-    const catColor = categories[i]["bg-color"];
+  for (let i = 0; i < category_data.length; i++) {
+    const catName = category_data[i].name;
+    const catId = category_data[i].id;
 
     categoryContainer.innerHTML += `
-        <div class="addtask-category" onclick="selectCategory('${category}', '${catColor}')">
-          ${category}
+        <div class="addtask-category" onclick="selectCategory('${catName}', ${catId})">
+          ${catName}
         </div>
       `;
   }
@@ -88,16 +142,13 @@ function renderCategories() {
  * @param {*} categoryTask
  * @param {*} catColor
  */
-function selectCategory(categoryTask, catColor) {
+function selectCategory(catName, catId) {
   let categoryInput = document.getElementById("categoryInput");
   let categoryList = document.getElementById("dropDownCategoryMenu");
-
-  categoryInput.value = categoryTask;
+  categoryInput.value = catName;
   hideCategories();
   categoryList.style.border = "0px";
-  categoryArr = [];
-  categoryArr.push(categoryTask);
-  categoryArr.push(catColor);
+  categoryArr = catId;
 }
 
 /**
@@ -111,7 +162,7 @@ function openCategories() {
   if (!categoriesContainerClick) {
     categoriesContainerClick = true;
     categoryList.style.border = "1px solid #CDCDCD";
-    renderCategories();
+    renderCategories();   
   } else {
     categoriesContainerClick = false;
     categoryList.style.border = "0px";
@@ -119,6 +170,7 @@ function openCategories() {
   }
   document.getElementById("categoryInput").classList.toggle("outline");
 }
+
 
 function hideCategories() {
   categoriesContainerClick = false;
@@ -149,22 +201,19 @@ function getInitials(username) {
  * Fetching data from the Database
  * @returns
  */
-async function fetchContactsFromAPI() {
+async function loadContacts() {
   try {
-    let response = await fetch(ADDTASK_URL + ".json");
-    const data = await response.json();
-    if (data && typeof data === "object" && data.users) {
-      return Object.values(data.users);
+    let response = await fetch(USERS_URL);
+    const data = await response.json();    
+    if (data) {
+      userList = data;
+      return data;
     } else {
       return [];
     }
   } catch (error) {
     return [];
   }
-}
-
-async function loadContacts() {
-  userList = await fetchContactsFromAPI();
 }
 
 /**
@@ -200,10 +249,11 @@ function displayDropdownUserList(userList) {
     if (initial !== lastInitial) {
       lastInitial = initial;
     }
+    let userId = user.id;
     let isSelected = selectedUsers.has(user.username);
     let additionalClass = isSelected ? "contact-card-click-assigned" : "";
     dropdownMenu.innerHTML += /*html*/ `
-      <div onclick="toggleUserSelection(${i})" id="contact-info${i}" class="contact-assigned ${additionalClass}">
+      <div onclick="toggleUserSelection(${i}, ${userId})" id="contact-info${i}" class="contact-assigned ${additionalClass}">
         <div class="initials" style="background-color: ${color};">${getInitials(
       user.username
     )}</div>
@@ -223,7 +273,7 @@ function displayDropdownUserList(userList) {
  * Handles the userselection in the dropdown menu. Highlighting, selection, removing etc.
  * @param {*} index
  */
-function toggleUserSelection(index) {
+function toggleUserSelection(index, userId) {
   let sortedUsers = Object.values(userList).sort((a, b) =>
     a.username.localeCompare(b.username)
   );
@@ -232,14 +282,14 @@ function toggleUserSelection(index) {
 
   if (selectedUsers.has(user.username)) {
     selectedUsers.delete(user.username);
-    removeUserFromSelection(user.username);
+    removeUserFromSelection(user.username, userId);
     contactElementAssigned.classList.remove("contact-card-click-assigned");
     contactElementAssigned
       .querySelector(".name-assigned")
       .classList.remove("contact-name-assigned");
   } else {
     selectedUsers.add(user.username);
-    addUserToSelection(user, getInitials(user.username));
+    addUserToSelection(user, userId);
     contactElementAssigned.classList.add("contact-card-click-assigned");
     contactElementAssigned
       .querySelector(".name-assigned")
@@ -247,7 +297,7 @@ function toggleUserSelection(index) {
   }
 }
 
-function addUserToSelection(user, userInitials) {
+function addUserToSelection(user, userId) {
   let contentAssignedUsers = document.getElementById("contentAssignedUsers");
   let userDiv = document.createElement("div");
   userDiv.className = "assigned-user";
@@ -263,19 +313,11 @@ function addUserToSelection(user, userInitials) {
     `;
 
   contentAssignedUsers.appendChild(userDiv);
-  assignedUsersArr.push({
-    initials: `${userInitials}`,
-    username: `${user.username}`,
-    color: `${user.color}`,
-  });
-  assignedUsersEdit.push({
-    initials: `${userInitials}`,
-    username: `${user.username}`,
-    color: `${user.color}`,
-  });
+  assignedUsersArr.push(userId);
+  assignedUsersEdit.push(userId);
 }
 
-function removeUserFromSelection(username) {
+function removeUserFromSelection(username, userId) {
   let contentAssignedUsers = document.getElementById("contentAssignedUsers");
   let userDiv = Array.from(contentAssignedUsers.children).find(
     (child) => child.dataset.username === username
@@ -285,13 +327,13 @@ function removeUserFromSelection(username) {
   }
   for (let i = 0; i < assignedUsersArr.length; i++) {
     const element = assignedUsersArr[i];
-    if (element.username == username) {
+    if (element == userId) {
       assignedUsersArr.splice(i, 1);
     }
   }
   for (let i = 0; i < assignedUsersEdit.length; i++) {
     const element = assignedUsersEdit[i];
-    if (element.username == username) {
+    if (element == userId) {
       assignedUsersEdit.splice(i, 1);
     }
   }
@@ -353,11 +395,9 @@ function addSubtask() {
     </li>
 `;
     subtasksArr.push({
-      checkbox_img: "../assets/img/checkbox-empty.svg",
       subtask: `${subtaskInput.value}`,
     });
     subtasksEdit.push({
-      checkbox_img: "../assets/img/checkbox-empty.svg",
       subtask: `${subtaskInput.value}`,
     });
     subtasksContent.innerHTML += newSubtaskHTML;
@@ -384,7 +424,7 @@ function editSubtask(liId, spanId, inputId) {
             <div class="input-icons-edit">
                 <img src ="../assets/img/deletecopy.svg" onclick="deleteSubtask('${liId}')">
                 <div class="divider"></div>
-                <img src="../assets/img/check1.svg" onclick="saveSubtask('${liId}', '${inputId}', '${spanId}')">
+                <img src="../assets/img/check1.svg" onclick="saveSubtask('${liId}', '${inputId}', '${spanId}', '${currentText}')">
             </div>
         </div>
     `;
@@ -400,7 +440,7 @@ function editSubtask(liId, spanId, inputId) {
  * @param {*} inputId
  * @param {*} spanId
  */
-function saveSubtask(liId, inputId, spanId) {
+function saveSubtask(liId, inputId, spanId, previousText) {
   const li = document.getElementById(liId);
   const input = document.getElementById(inputId);
   const saveSubtaskHTML = `
@@ -416,6 +456,9 @@ function saveSubtask(liId, inputId, spanId) {
     `;
 
   li.innerHTML = saveSubtaskHTML;
+
+  saveInSubtasksArr(previousText, input.value);
+
   li.classList.remove("subtask-item-on-focus");
   li.classList.add("subtask-item");
 }
@@ -432,10 +475,6 @@ function deleteSubtask(liId) {
 /**
  * Clearing inputfields from Subtask
  */
-function clearSubtaskInput() {
-  document.getElementById("subtaskInput").value = "";
-}
-
 function clearSubtaskInput() {
   const input = document.getElementById("subtaskInput");
   input.value = "";
