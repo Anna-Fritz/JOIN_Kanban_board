@@ -1,5 +1,5 @@
 const BASE_URL =
-  "https://.firebasedatabase.app/";
+  "http://127.0.0.1:8000/user/";
 
 let loadedUserArray = {};
 let colors = [];
@@ -9,12 +9,10 @@ let userColors = {};
  * Loading data from DB and moves it to an local object for display
  */
 async function loadData() {
-  let response = await fetch(BASE_URL + ".json");
+  let response = await fetch(BASE_URL);
   const data = await response.json();
-  if (data && typeof data === "object" && data.users) {
-    loadedUserArray = data.users;
-    displayContacts(loadedUserArray);
-  }
+  loadedUserArray = data;
+  displayContacts(loadedUserArray);
 }
 
 /**
@@ -87,7 +85,7 @@ function generateRandomColor() {
  * @param {*} path
  * @returns
  */
-async function addContactS(path = "users") {
+async function addContactS() {
   let userNameInput = document.getElementById("addInputNameA");
   let emailInput = document.getElementById("addInputEmailB");
   let phoneInput = document.getElementById("addInputPhoneC");
@@ -98,7 +96,7 @@ async function addContactS(path = "users") {
     contactNumber: phoneInput.value,
     color: color,
   };
-  let response = await fetch(BASE_URL + path + ".json", {
+  let response = await fetch(BASE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -110,6 +108,7 @@ async function addContactS(path = "users") {
   window.location.reload();
   return await response.json();
 }
+
 
 function showSuccessPopUp() {
   if (window.innerWidth < 1350) {
@@ -129,20 +128,14 @@ function closeSuccessPopUp() {
  * @param {*} i
  * @returns
  */
-async function deleteContact(i) {
-  let sortedUsers = Object.values(loadedUserArray).sort((a, b) =>
-    a.username.localeCompare(b.username)
-  );
-  let userId = Object.keys(loadedUserArray).find(
-    (key) => loadedUserArray[key] === sortedUsers[i]
-  );
-  let response = await fetch(BASE_URL + "users/" + userId + ".json", {
+async function deleteContact(userId) {
+  let response = await fetch(BASE_URL + userId + "/", {
     method: "DELETE",
   });
   await loadData();
   document.getElementById("render-contact-details").innerHTML = "";
   closeContactDetailsMobile();
-  return await response.json();
+  return response;
 }
 
 /**
@@ -207,36 +200,30 @@ function getInitials(name) {
  * Saving changes after a contact is edited from indexed user and handles the color
  * @returns
  */
-async function saveContact() {
+async function saveContact(userId) {
   let editNameInput = document.getElementById("editInputName");
   let editEmailInput = document.getElementById("editInputEmail");
   let editPhoneInput = document.getElementById("editInputPhone");
+  let colorName;
+  for(let i = 0; i < loadedUserArray.length; i++) {
+    if(userId == loadedUserArray[i].id){
+      colorName = loadedUserArray[i].color
+    }
+  }
   let updatedData = {
     username: editNameInput.value,
-    email: editEmailInput.value,
+    email : editEmailInput.value,
     contactNumber: editPhoneInput.value,
+    color: colorName
   };
-  let userIndex = window.currentlyEditingUserIndex;
-  let sortedUsers = Object.values(loadedUserArray).sort((a, b) =>
-    a.username.localeCompare(b.username)
-  );
-  if (userIndex < 0 || userIndex >= sortedUsers.length) {
-    return;
-  }
-  let userId = Object.keys(loadedUserArray).find(
-    (key) => loadedUserArray[key] === sortedUsers[userIndex]
-  );
-  let color =
-    userColors[sortedUsers[userIndex].username] || generateRandomColor();
-  userColors[updatedData.username] = color;
-  updatedData.color = color;
-  let response = await fetch(BASE_URL + "users/" + userId + ".json", {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updatedData),
-  });
+  
+  await fetch(BASE_URL + userId + "/" , {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedData),
+    });
   closeEditContactPopup();
   closeContactDetailsMobile();
   document.getElementById("render-contact-details").innerHTML = "";
@@ -248,7 +235,7 @@ async function saveContact() {
  * Rendering the contactedit popup
  * @param {*} i
  */
-function renderEdit(i) {
+function renderEdit(i, userId) {
   window.currentlyEditingUserIndex = i;
   let sortedUsers = Object.values(loadedUserArray).sort((a, b) =>
     a.username.localeCompare(b.username)
@@ -257,7 +244,7 @@ function renderEdit(i) {
     let user = sortedUsers[i];
     let editContainer = document.getElementById("editContact");
     editContainer.innerHTML = "";
-    editContainer.innerHTML = generateEditContactHTML(user, i);
+    editContainer.innerHTML = generateEditContactHTML(user, userId);
   }
 }
 
@@ -369,14 +356,14 @@ function validatePhone() {
  * Checking regex for the name and points to the email if correct
  * @returns
  */
-function editValidateName() {
+function editValidateName(userId) {
   let x = document.forms["editForm"]["editName"].value;
   let xName = document.getElementById("editValidSpanFieldName");
   if (x == "") {
     xName.innerHTML = "Please fill your name";
     return false;
   } else {
-    return editValidateEmail();
+    return editValidateEmail(userId);
   }
 }
 
@@ -384,7 +371,7 @@ function editValidateName() {
  * Checking regex for the email and points to the phone if correct
  * @returns
  */
-function editValidateEmail() {
+function editValidateEmail(userId) {
   let x = document.forms["editForm"]["editEmail"].value;
   let xEmail = document.getElementById("editValidSpanFieldEmail");
   let emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -396,7 +383,7 @@ function editValidateEmail() {
     xEmail.innerHTML = "Please enter a valid email address";
     return false;
   } else {
-    return editValidatePhone();
+    return editValidatePhone(userId);
   }
 }
 
@@ -404,14 +391,14 @@ function editValidateEmail() {
  * Checking regex for the phone and saves the contact if correct
  * @returns
  */
-function editValidatePhone() {
+function editValidatePhone(userId) {
   let x = document.forms["editForm"]["editPhone"].value;
   let xPhone = document.getElementById("editValidSpanFieldPhone");
   if (x == "") {
     xPhone.innerHTML = "Please fill your phone";
     return false;
   } else {
-    saveContact();
+    saveContact(userId);
     return false;
   }
 }
