@@ -261,7 +261,7 @@ async function saveSubtaskStatus(taskId, subtaskId, subtaskBool) {
   let data = {
     completed: subtaskBool,
   };
-  let response = await fetch('http://127.0.0.1:8000/task/' + taskId + '/subtask/' + subtaskId + '/', {
+  let response = await fetch('http://127.0.0.1:8000/api/task/' + taskId + '/subtask/' + subtaskId + '/', {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

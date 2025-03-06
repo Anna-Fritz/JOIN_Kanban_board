@@ -19,21 +19,21 @@ let statusEdit;
  * Adding backend task URL
  */
 const PRIO_URL =
-  "http://127.0.0.1:8000/prio/";
+  "http://127.0.0.1:8000/api/prio/";
 
 
 /**
 * Adding backend category URL
 */
  const CATEGORY_URL =
-   "http://127.0.0.1:8000/category/";
+   "http://127.0.0.1:8000/api/category/";
 
 
   /**
  * Adding backend user URL
  */
 const USERS_URL =
-  "http://127.0.0.1:8000/user/"
+  "http://127.0.0.1:8000/api/user/"
 
 /**
  * asynchronously calls two functions to fetch category and priority data

@@ -1,7 +1,7 @@
 let users = [];
 const REG_URL = "http://127.0.0.1:8000/api/auth/registration/";
 const LOGIN_URL = "http://127.0.0.1:8000/api/auth/login/";
-const BASE_URL = "http://127.0.0.1:8000/user/";
+const BASE_URL = "http://127.0.0.1:8000/api/user/";
 
 /**
  * Adding a user to the Database incl. popup, timing, form reset etc.

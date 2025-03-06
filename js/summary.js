@@ -1,5 +1,5 @@
 const SUMMARY_URL =
-  "http://127.0.0.1:8000/summary/";
+  "http://127.0.0.1:8000/api/summary/";
 
 /**
  * Getting DB data for summary

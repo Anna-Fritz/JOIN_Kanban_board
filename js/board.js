@@ -9,7 +9,7 @@ let index_done = [];
 let userlist = [];
 
 const ADD_URL =
-  "http://127.0.0.1:8000/task/";
+  "http://127.0.0.1:8000/api/task/";
 
 /**
  * Retrieves task data and updates the HTML content accordingly
