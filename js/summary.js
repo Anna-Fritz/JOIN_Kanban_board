@@ -5,18 +5,8 @@ const SUMMARY_URL =
  * Getting DB data for summary
  */
 async function renderKeyMetrics() {
-  const accessToken = localStorage.getItem("accessToken");
 
-  if (!accessToken) {
-      return;
-  }
-
-  let response = await fetch(SUMMARY_URL, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`
-    }
-  });
+  let response = await fetch(SUMMARY_URL);
   if (response.status === 401) {
     await refreshToken();
     return renderKeyMetrics();
