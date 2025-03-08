@@ -48,8 +48,19 @@ async function getTaskOptions() {
  * @returns
  */
 async function getPrioData() {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   try {
-    let response = await fetch(PRIO_URL);
+    let response = await fetch(PRIO_URL, {
+      method: "GET",
+      headers: {
+        // important when permission_classes = [IsAuthenticated] for permission to use
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
     const data = await response.json();
     if (data) {
       prio_data = data;
@@ -67,8 +78,19 @@ async function getPrioData() {
  * @returns 
  */
 async function getCategoryData() {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   try {
-    let response = await fetch(CATEGORY_URL);
+    let response = await fetch(CATEGORY_URL, {
+      method: "GET",
+      headers: {
+      // important when permission_classes = [IsAuthenticated] for permission to use
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
     const data = await response.json();
     if (data) {
       category_data = data;
@@ -202,8 +224,19 @@ function getInitials(username) {
  * @returns
  */
 async function loadContacts() {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   try {
-    let response = await fetch(USERS_URL);
+    let response = await fetch(USERS_URL, {
+      method: "GET",
+      headers: {
+      // important when permission_classes = [IsAuthenticated] for permission to use
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
     const data = await response.json();    
     if (data) {
       userList = data;
@@ -274,6 +307,7 @@ function displayDropdownUserList(userList) {
  * @param {*} index
  */
 function toggleUserSelection(index, userId) {
+  document.getElementById('userNameInput').value = "";
   let sortedUsers = Object.values(userList).sort((a, b) =>
     a.username.localeCompare(b.username)
   );

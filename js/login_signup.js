@@ -2,6 +2,7 @@ let users = [];
 const REG_URL = "http://127.0.0.1:8000/api/auth/registration/";
 const LOGIN_URL = "http://127.0.0.1:8000/api/auth/login/";
 const BASE_URL = "http://127.0.0.1:8000/api/user/";
+const GUEST_LOGIN_URL = "http://127.0.01:8000/api/auth/login/guest/";
 
 /**
  * Adding a user to the Database incl. popup, timing, form reset etc.
@@ -28,24 +29,6 @@ async function addUser() {
   document.getElementById("userEmail").value = "";
   document.getElementById("userPassword").value = "";
   document.getElementById("confirmUserPassword").value = "";
-}
-
-/**
- * Loading registered Userdata from DB and moves it to an local object for display
- */
-async function loadUserFromDb() {
-  let response = await fetch(REG_URL + ".json");
-
-  if (response.ok) {
-    const registeredUsers = await response.json();
-    const users = Object.keys(registeredUsers).map((key) => ({
-      ...registeredUsers[key],
-      id: key,
-    }));
-    return users;
-  } else {
-    return [];
-  }
 }
 
 /**
@@ -101,6 +84,11 @@ function splitUsername() {
 }
 
 async function addUserToContactList() {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   let username = document.getElementById("userName");
   let mail = document.getElementById("userEmail");
   let color = generateRandomColor();
@@ -117,6 +105,7 @@ async function addUserToContactList() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`
       },
       body: JSON.stringify(data),
     });
@@ -305,22 +294,22 @@ function saveLoginData(data) {
  */
 async function refreshToken() {
   const accessToken = localStorage.getItem("accessToken");
-    
     if (!accessToken) {
         return;
     }
-
   const response = await fetch("http://localhost:8000/api/auth/login/refresh/", {
       method: "POST",
       credentials: "include", // included cookie
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
   });
-
   if (response.ok) {
       const data = await response.json();
-      localStorage.setItem("accessToken", data.access); // save new accessToken
+      localStorage.setItem("accessToken", data.accessToken); // save new accessToken
   } else {
-      console.error("Session abgelaufen. Bitte neu anmelden.");
-      window.location.href = "../../index.html";
+      console.error("Session expired. Please login again.");
+      logOut();
   }
 }
 
@@ -353,4 +342,28 @@ function generateRandomColor() {
     color += letters[Math.floor(Math.random() * 16)];
   }
   return color;
+}
+
+
+async function loginGuest() {
+  let guestLogin = await fetch(GUEST_LOGIN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (guestLogin.ok) {
+    let response = await guestLogin.json();
+    localStorage.setItem("accessToken", response.accessToken);
+    localStorage.setItem("refreshToken", response.refreshToken);
+    localStorage.setItem("guestLogin", true);
+    const loginSuccessElement = document.getElementById("loginSuccess");
+    loginSuccessElement.classList.remove("d-none");
+    setTimeout(loginSuccessfullPopUp, 100);
+    users = [];
+    setTimeout(function () {
+      window.location.href = "../html/summary.html";
+    }, 1500);
+  } else {
+    wrongCredentials.innerHTML = "Guest Login temporerly not available";
+  }
 }

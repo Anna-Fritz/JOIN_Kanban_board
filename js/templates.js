@@ -1,17 +1,26 @@
+const GUEST_LOGOUT_URL = "http://127.0.01:8000/api/auth/logout/guest/";
+
 /**
  * loads HTML content from files specified in the w3-include-html attribute of elements and inserts the content into those elements
  */
 async function includeHTML() {
-  let includeElements = document.querySelectorAll("[w3-include-html]");
-  for (let i = 0; i < includeElements.length; i++) {
-    const element = includeElements[i];
-    file = element.getAttribute("w3-include-html");
-    let resp = await fetch(file);
-    if (resp.ok) {
-      element.innerHTML = await resp.text();
-      checkUserStatusForInitials();
-    } else {
-      element.innerHTML = "Page not found";
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      window.location.replace('../../index.html');
+      return;
+  } else {
+    let includeElements = document.querySelectorAll("[w3-include-html]");
+    for (let i = 0; i < includeElements.length; i++) {
+      const element = includeElements[i];
+      file = element.getAttribute("w3-include-html");
+      let resp = await fetch(file);
+      if (resp.ok) {
+        element.innerHTML = await resp.text();
+        checkUserStatusForInitials();
+      } else {
+        element.innerHTML = "Page not found";
+      }
     }
   }
 }
@@ -73,6 +82,15 @@ function getInitialsHeader(name) {
     .join("");
 }
 
+function checkLogout() {
+  let guestLogin = localStorage.getItem("guestLogin");
+  if (guestLogin) {
+    logoutGuest();
+  } else {
+    logOut();
+  }
+}
+
 /**
  * removes the username and pageLoaded items from the browser's localStorage, effectively logging the user out
  */
@@ -87,8 +105,32 @@ async function logOut() {
   await fetch("http://localhost:8000/api/auth/logout/", {
     method: "POST",
     credentials: "include", // important for sending cookie
-  })
+  });
+  window.location.href = "../../index.html";
 }
+
+
+async function logoutGuest() {
+  const refreshToken = localStorage.getItem("refreshToken");
+  const accessToken = localStorage.getItem("accessToken");
+
+  if (!accessToken) {
+    console.warn("No access token found, already logged out.");
+    window.location.replace("../../index.html");
+    return;
+  } else {
+    localStorage.removeItem("accessToken");
+  }
+
+    await fetch(GUEST_LOGOUT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken: refreshToken })
+    });
+}
+
 
 /**
  * generates HTML to display a contact in a list

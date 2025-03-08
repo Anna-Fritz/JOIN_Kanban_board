@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="./css/login_signup.css" />
     <link rel="stylesheet" href="./css/style.css" />
   </head>
+  <script>
+    localStorage.clear();
+  </script>
   <body onload="refreshToken(), setFavicon()">
     <div class="background-logo"></div>
     <img
@@ -73,7 +76,7 @@
             <button onclick="validateLoginEmailInput()" class="btn-filled">
               Log in
             </button>
-            <a class="btn-outline sign-up-link" href="./html/summary.html">
+            <a onclick="loginGuest()" class="btn-outline sign-up-link">
               Guest Login
             </a>
           </div>
@@ -107,6 +110,7 @@
       Login successfull
     </div>
 
+    <script src="./js/templates.js"></script>
     <script src="./js/login_signup.js"></script>
   </body>
 </html>

@@ -15,9 +15,20 @@ const ADD_URL =
  * Retrieves task data and updates the HTML content accordingly
  */
 async function loadTasks() {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   tasks = [];
   dbKeys = [];
-  let response = await fetch(ADD_URL);
+  let response = await fetch(ADD_URL, {
+    method: "GET",
+    headers: {
+    // important when permission_classes = [IsAuthenticated] for permission to use
+      "Authorization": `Bearer ${accessToken}`
+    }
+  });
   const data = await response.json();
   tasks = data
     for (let index = 0; index < tasks.length; index++) {
@@ -67,6 +78,11 @@ function getInitials(username) {
  * @returns 
  */
 async function addTask() {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   let taskTitle = document.getElementById("addTaskInputTitle");
   let descriptionName = document.getElementById("addTaskDiscriptionField");
   let taskDate = document.getElementById("addTaskInputDueDate");
@@ -85,6 +101,7 @@ async function addTask() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`
     },
     body: JSON.stringify(data),
   });
@@ -102,6 +119,11 @@ async function addTask() {
  * @returns 
  */
 async function addTaskPopupBoard() {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   let taskTitle = document.getElementById("addTaskPopupInputTitle");
   let descriptionName = document.getElementById("addTaskPopupDiscriptionField");
   let taskDate = document.getElementById("addTaskPopupInputDueDate");
@@ -119,6 +141,7 @@ async function addTaskPopupBoard() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`
     },
     body: JSON.stringify(data),
   });
@@ -133,10 +156,18 @@ async function addTaskPopupBoard() {
  * @returns 
  */
 async function deleteTask(i) {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   closeTaskDetails();
-
   await fetch(ADD_URL + i + "/", {
     method: "DELETE",
+    headers: {
+    // important when permission_classes = [IsAuthenticated] for permission to use
+      "Authorization": `Bearer ${accessToken}`
+    }
   });
   await loadTasks();
 }
@@ -250,6 +281,11 @@ function moveTo(status) {
    * @returns 
    */
   async function saveProgress(id) {
+    const accessToken = localStorage.getItem("accessToken");
+    // important when permission_classes = [IsAuthenticated] for permission to use
+    if (!accessToken) {
+        return;
+    }
     let currentTask = tasks[id];
     let currentTaskId = tasks[id].id;
     let data = {
@@ -259,6 +295,7 @@ function moveTo(status) {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`
       },
       body: JSON.stringify(data),
     });
@@ -293,9 +330,20 @@ function closeTaskDetails() {
  * fetches tasks from database, filters them based on a search input (matching title or description)
  */
 async function findTask() {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   tasks = [];
   dbKeys = [];
-  let response = await fetch(ADD_URL);
+  let response = await fetch(ADD_URL, {
+    method: "GET",
+    headers: {
+    // important when permission_classes = [IsAuthenticated] for permission to use
+      "Authorization": `Bearer ${accessToken}`
+    }
+  });
   const data = await response.json();
   tasks = data;
   let search = document.getElementById("search-input").value;

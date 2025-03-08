@@ -2,15 +2,26 @@
  * retrieves user data from a database
  */
 async function getUsersFromDB() {
-    let response = await fetch(USERS_URL);
-    const data = await response.json();
-    let ObjValues = Object.values(data);
-    userlist = [];
-    for (let i = 0; i < ObjValues.length; i++) {
-      const element = ObjValues[i];
-      userlist.push(element);
-    }
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
   }
+  let response = await fetch(USERS_URL, {
+    method: "GET",
+    headers: {
+    // important when permission_classes = [IsAuthenticated] for permission to use
+      "Authorization": `Bearer ${accessToken}`
+    }
+  });
+  const data = await response.json();
+  let ObjValues = Object.values(data);
+  userlist = [];
+  for (let i = 0; i < ObjValues.length; i++) {
+    const element = ObjValues[i];
+    userlist.push(element);
+  }
+}
   
   /**
    * fetches and sorts user data, finds the index of a user with a matching username
@@ -184,6 +195,11 @@ async function openEdit(i) {
    * @returns
    */
   async function saveEdit(i) {
+    const accessToken = localStorage.getItem("accessToken");
+    // important when permission_classes = [IsAuthenticated] for permission to use
+    if (!accessToken) {
+        return;
+    }
     let taskTitle = document.getElementById("editTitle");
     let descriptionName = document.getElementById("editDescription");
     let taskDate = document.getElementById("editDueDate");
@@ -203,6 +219,7 @@ async function openEdit(i) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`
       },
       body: JSON.stringify(data),
     });

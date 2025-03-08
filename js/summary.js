@@ -5,16 +5,29 @@ const SUMMARY_URL =
  * Getting DB data for summary
  */
 async function renderKeyMetrics() {
-
-  let response = await fetch(SUMMARY_URL);
-  if (response.status === 401) {
-    await refreshToken();
-    return renderKeyMetrics();
-  }
-  if (response.ok) {
-    const data = await response.json();
-    fillKeyMetrics(data);  
-  }
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+    if (!accessToken) {
+      window.location.replace("../../index.html");
+      return;
+    }
+    let response = await fetch(SUMMARY_URL, {
+      method: "GET",
+      headers: {
+        // important when permission_classes = [IsAuthenticated] for permission to use
+        "Authorization": `Bearer ${accessToken}`
+      }
+    });
+    if (response.status === 401) {
+      // Wenn das Access-Token abgelaufen ist, versuche das Refresh-Token zu verwenden
+      await refreshToken();
+      return renderKeyMetrics(); // Request erneut senden
+      
+    }
+    if (response.ok) {
+      const data = await response.json();
+      fillKeyMetrics(data);  
+    }
 }
 
 /**

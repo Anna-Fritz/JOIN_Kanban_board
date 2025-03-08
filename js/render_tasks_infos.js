@@ -258,6 +258,11 @@
  * @returns 
  */
 async function saveSubtaskStatus(taskId, subtaskId, subtaskBool) {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   let data = {
     completed: subtaskBool,
   };
@@ -265,6 +270,7 @@ async function saveSubtaskStatus(taskId, subtaskId, subtaskBool) {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`
     },
     body: JSON.stringify(data),
   });  

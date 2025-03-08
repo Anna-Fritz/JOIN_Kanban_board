@@ -9,7 +9,18 @@ let userColors = {};
  * Loading data from DB and moves it to an local object for display
  */
 async function loadData() {
-  let response = await fetch(BASE_URL);
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
+  let response = await fetch(BASE_URL, {
+    method: "GET",
+    headers: {
+    // important when permission_classes = [IsAuthenticated] for permission to use
+      "Authorization": `Bearer ${accessToken}`
+    }
+  });
   const data = await response.json();
   loadedUserArray = data;
   displayContacts(loadedUserArray);
@@ -84,6 +95,11 @@ function generateRandomColor() {
  * @returns
  */
 async function addContactS() {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   let userNameInput = document.getElementById("addInputNameA").value;
   let emailInput = document.getElementById("addInputEmailB").value;
   let phoneInput = document.getElementById("addInputPhoneC").value;
@@ -98,6 +114,7 @@ async function addContactS() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`
     },
     body: JSON.stringify(data),
   });
@@ -129,8 +146,14 @@ function closeSuccessPopUp() {
  * @returns
  */
 async function deleteContact(userId) {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   let response = await fetch(BASE_URL + userId + "/", {
     method: "DELETE",
+    "Authorization": `Bearer ${accessToken}`
   });
   await loadData();
   document.getElementById("render-contact-details").innerHTML = "";
@@ -200,6 +223,11 @@ function getInitials(name) {
  * @returns
  */
 async function saveContact(userId) {
+  const accessToken = localStorage.getItem("accessToken");
+  // important when permission_classes = [IsAuthenticated] for permission to use
+  if (!accessToken) {
+      return;
+  }
   let editNameInput = document.getElementById("editInputName").value;
   let editEmailInput = document.getElementById("editInputEmail").value;
   let editPhoneInput = document.getElementById("editInputPhone").value;
@@ -220,6 +248,7 @@ async function saveContact(userId) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`
       },
       body: JSON.stringify(updatedData),
     });
