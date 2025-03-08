@@ -153,7 +153,9 @@ async function deleteContact(userId) {
   }
   let response = await fetch(BASE_URL + userId + "/", {
     method: "DELETE",
-    "Authorization": `Bearer ${accessToken}`
+    headers: {
+      "Authorization": `Bearer ${accessToken}`
+    }
   });
   await loadData();
   document.getElementById("render-contact-details").innerHTML = "";
