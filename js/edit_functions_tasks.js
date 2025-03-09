@@ -180,6 +180,7 @@ async function openEdit(i) {
   
         subtasksEdit.push({
           subtask: `${element.subtask}`,
+          completed: `${element.completed}`
         });
       }
       renderSubtasksEdit();
