@@ -643,6 +643,11 @@ input::placeholder {
     .subtask-cont-text {
         width: 300px;
     }
+    #task-details-Popup {
+        border-radius: 0;
+        height: 100%;
+        width: 100%;
+    }
 }
 @media(max-width: 600px) {
     .search-container {
@@ -652,11 +657,6 @@ input::placeholder {
 @media(max-width: 500px) {
     .board {
         padding: 40px 20px 0 20px;
-    }
-    #task-details-Popup {
-        border-radius: 0;
-        height: 100%;
-        width: 100%;
     }
     .subtask-cont-text {
         width: 350px;
