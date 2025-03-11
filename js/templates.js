@@ -82,6 +82,9 @@ function getInitialsHeader(name) {
     .join("");
 }
 
+/**
+ *  checks if a guest login exists in localStorage, and if so, calls the logoutGuest function; otherwise, it calls the logOut function
+ */
 function checkLogout() {
   let guestLogin = localStorage.getItem("guestLogin");
   if (guestLogin) {
@@ -109,7 +112,9 @@ async function logOut() {
   window.location.href = "../../index.html";
 }
 
-
+/**
+ * checks if an access token is present, logs the user out by removing the access token from localStorage, and sends a POST request to log out the guest using the refresh token
+ */
 async function logoutGuest() {
   const refreshToken = localStorage.getItem("refreshToken");
   const accessToken = localStorage.getItem("accessToken");

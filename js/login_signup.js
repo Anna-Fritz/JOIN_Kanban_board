@@ -344,7 +344,9 @@ function generateRandomColor() {
   return color;
 }
 
-
+/**
+ * asynchronously logs in a guest user by sending a POST request, stores the received tokens in localStorage
+ */
 async function loginGuest() {
   let guestLogin = await fetch(GUEST_LOGIN_URL, {
     method: 'POST',
